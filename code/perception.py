@@ -17,6 +17,33 @@ def color_thresh(img, rgb_thresh=(160, 160, 160)):
     # Return the binary image
     return color_select
 
+def sample_rock_selection_hsv(img):
+    # Convert RGB to HSV
+    hsv_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+
+    # define range of yellow color in HSV
+    lower_yellow = np.array([20,100,100])
+    upper_yellow = np.array([40,255,255])
+
+    # Threshold the HSV image to get only yellow colors and return the mask
+    return cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+
+def obstacle_selection(img, rgb_thresh=(10, 10, 10), rgb_upper=(160, 160, 160)):
+    # Create an array of zeros same xy size as img, but single channel
+    color_select = np.zeros_like(img[:,:,0])
+    
+    # Require that each pixel be below threshold and above lower limit
+    # matching_pixels is a boolean array with "True" where condition was met
+    matching_pixels = (img[:,:,0] > rgb_thresh[0]) \
+                & (img[:,:,1] > rgb_thresh[1]) \
+                & (img[:,:,2] > rgb_thresh[2]) & (img[:,:,0] <= rgb_upper[0]) \
+                & (img[:,:,1] <= rgb_upper[1]) \
+                & (img[:,:,2] <= rgb_upper[2])
+            
+    # Index the array of zeros with the boolean array and set to 1
+    color_select[matching_pixels] = 1
+    return color_select
+
 # Define a function to convert to rover-centric coordinates
 def rover_coords(binary_img):
     # Identify nonzero pixels
