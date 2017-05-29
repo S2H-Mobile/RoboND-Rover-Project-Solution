@@ -127,6 +127,9 @@ def perception_step(Rover):
     # If you've decided that everything above the threshold is navigable terrain,
     # then everthing below the threshold must be an obstacle!
     obstacle = obstacle_selection(warped)
+    # optional: smoothing of vision image
+    #kernel = np.ones((10,10),np.uint8)
+    #obstacle = cv2.morphologyEx(obstacle_selection(warped), cv2.MORPH_OPEN, kernel)
     sample_rock = sample_rock_selection_hsv(warped)   
     
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)

@@ -9,6 +9,13 @@ def decision_step(Rover):
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
 
+    # Optimizing Time Tip: Moving faster and more efficiently will minimize total time.
+    # Think about allowing for a higher maximum velocity and give your rover the brains to not revisit previously mapped areas.
+    
+    #Optimizing for Finding All Rocks Tip: The rocks always appear near the walls.
+    # Think about making your rover a "wall crawler" that explores the environment
+    # by always keeping a wall on its left or right. If done right, this optimization can help all the aforementioned metrics.
+    
     # Example:
     # Check if we have vision data to make decisions with
     if Rover.nav_angles is not None:
