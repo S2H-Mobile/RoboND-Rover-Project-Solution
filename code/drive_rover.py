@@ -51,6 +51,8 @@ class RoverState():
         self.brake = 0 # Current brake value
         self.nav_angles = None # Angles of navigable terrain pixels
         self.nav_dists = None # Distances of navigable terrain pixels
+        self.sample_angles = None # Angles of sample pixels
+        self.sample_dists = None # Distances of sample pixels
         self.ground_truth = ground_truth_3d # Ground truth worldmap
         self.mode = 'forward' # Current mode (can be forward or stop)
         self.throttle_set = 0.2 # Throttle setting when accelerating
@@ -118,7 +120,7 @@ def telemetry(sid, data):
             send_control(commands, out_image_string1, out_image_string2)
  
             # If in a state where want to pickup a rock send pickup command
-            if Rover.send_pickup:
+            if Rover.send_pickup and not Rover.picking_up:
                 send_pickup()
                 # Reset Rover flags
                 Rover.send_pickup = False
@@ -184,17 +186,17 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     
-    os.system('rm -rf IMG_stream/*')
-    if args.image_folder != '':
-        print("Creating image folder at {}".format(args.image_folder))
-        if not os.path.exists(args.image_folder):
-            os.makedirs(args.image_folder)
-        else:
-            shutil.rmtree(args.image_folder)
-            os.makedirs(args.image_folder)
-        print("Recording this run ...")
-    else:
-        print("NOT recording this run ...")
+    #os.system('rm -rf IMG_stream/*')
+    #if args.image_folder != '':
+    #    print("Creating image folder at {}".format(args.image_folder))
+    #    if not os.path.exists(args.image_folder):
+    #        os.makedirs(args.image_folder)
+    #    else:
+    #        shutil.rmtree(args.image_folder)
+    #        os.makedirs(args.image_folder)
+    #    print("Recording this run ...")
+    #else:
+    #    print("NOT recording this run ...")
     
     # wrap Flask application with socketio's middleware
     app = socketio.Middleware(sio, app)

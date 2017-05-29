@@ -97,11 +97,7 @@ def perspect_transform(img, src, dst):
     warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image 
     return warped
 
-# Apply the above functions in succession and update the Rover state accordingly
-def perception_step(Rover): 
-    image = Rover.img
-    
-    # 1) Define source and destination points for perspective transform
+def calibrate(image):
     # Define calibration box in source (actual) and destination (desired) coordinates
     # These source and destination points are defined to warp the image
     # to a grid where each 10x10 pixel square represents 1 square meter
@@ -110,12 +106,20 @@ def perception_step(Rover):
     # Set a bottom offset to account for the fact that the bottom of the image 
     # is not the position of the rover but a bit in front of it
     bottom_offset = 6
-    source = np.float32([[14, 140], [301 ,140],[200, 96], [118, 96]])
-    destination = np.float32([[image.shape[1]/2 - dst_size, image.shape[0] - bottom_offset],
+    src = np.float32([[14, 140], [301 ,140],[200, 96], [118, 96]])
+    dst = np.float32([[image.shape[1]/2 - dst_size, image.shape[0] - bottom_offset],
                   [image.shape[1]/2 + dst_size, image.shape[0] - bottom_offset],
                   [image.shape[1]/2 + dst_size, image.shape[0] - 2*dst_size - bottom_offset], 
                   [image.shape[1]/2 - dst_size, image.shape[0] - 2*dst_size - bottom_offset],
                   ])
+    return src, dst
+
+# Apply the above functions in succession and update the Rover state accordingly
+def perception_step(Rover): 
+    image = Rover.img
+    
+    # 1) Define source and destination points for perspective transform
+    source, destination = calibrate(image)
     
     # 2) Apply perspective transform
     warped = perspect_transform(image, source, destination)
@@ -127,9 +131,6 @@ def perception_step(Rover):
     # If you've decided that everything above the threshold is navigable terrain,
     # then everthing below the threshold must be an obstacle!
     obstacle = obstacle_selection(warped)
-    # optional: smoothing of vision image
-    #kernel = np.ones((10,10),np.uint8)
-    #obstacle = cv2.morphologyEx(obstacle_selection(warped), cv2.MORPH_OPEN, kernel)
     sample_rock = sample_rock_selection_hsv(warped)   
     
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
@@ -139,6 +140,7 @@ def perception_step(Rover):
 
     # 5) Convert map image pixel values to rover-centric coords
     nav_x, nav_y = rover_coords(navigable)
+    rock_x, rock_y = rover_coords(sample_rock)
     
     #Optimizing Map Fidelity Tip:
     #Your perspective transform is technically only valid when roll and pitch angles are near zero.
@@ -150,7 +152,6 @@ def perception_step(Rover):
     if is_roll_small and is_pitch_small:
         # 5) Convert map image pixel values to rover-centric coords
         obs_x, obs_y = rover_coords(obstacle)
-        rock_x, rock_y = rover_coords(sample_rock)
         # 6) Convert rover-centric pixel values to world coordinates
         rover_xpos = Rover.pos[0]
         rover_ypos = Rover.pos[1]
@@ -160,12 +161,15 @@ def perception_step(Rover):
         rock_x_world, rock_y_world = pix_to_world(rock_x, rock_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
         # 7) Update Rover worldmap (to be displayed on right side of screen)
         Rover.worldmap[obs_y_world, obs_x_world, 0] += 1
-        Rover.worldmap[rock_y_world, rock_x_world, 1] += 96
-        Rover.worldmap[nav_y_world, nav_x_world, 2] += 1
+        Rover.worldmap[rock_y_world, rock_x_world] = [255,255,0]
+        Rover.worldmap[nav_y_world, nav_x_world, 2] += 2
 
     # 8) Convert rover-centric pixel positions to polar coordinates
-    # Update Rover pixel distances and angles
-    rover_centric_pixel_distances, rover_centric_angles = to_polar_coords(nav_x, nav_y)
-    Rover.nav_dists = rover_centric_pixel_distances
-    Rover.nav_angles = rover_centric_angles
+    # Update Rover navigable pixel and rock sample distances and angles
+    nav_distances, nav_angles = to_polar_coords(nav_x, nav_y)
+    sample_distances, sample_angles = to_polar_coords(rock_x, rock_y)
+    Rover.nav_dists = nav_distances
+    Rover.nav_angles = nav_angles
+    Rover.sample_dists = sample_distances
+    Rover.sample_angles = sample_angles
     return Rover
