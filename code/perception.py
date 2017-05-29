@@ -132,21 +132,29 @@ def perception_step(Rover):
 
     # 5) Convert map image pixel values to rover-centric coords
     nav_x, nav_y = rover_coords(navigable)
-    obs_x, obs_y = rover_coords(obstacle)
-    rock_x, rock_y = rover_coords(sample_rock)
     
-    # 6) Convert rover-centric pixel values to world coordinates
-    rover_xpos = Rover.pos[0]
-    rover_ypos = Rover.pos[1]
-    rover_yaw = Rover.yaw
-    nav_x_world, nav_y_world = pix_to_world(nav_x, nav_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
-    obs_x_world, obs_y_world = pix_to_world(obs_x, obs_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
-    rock_x_world, rock_y_world = pix_to_world(rock_x, rock_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
-    
-    # 7) Update Rover worldmap (to be displayed on right side of screen)
-    Rover.worldmap[obs_y_world, obs_x_world, 0] += 1
-    Rover.worldmap[rock_y_world, rock_x_world, 1] += 96
-    Rover.worldmap[nav_y_world, nav_x_world, 2] += 1
+    #Optimizing Map Fidelity Tip:
+    #Your perspective transform is technically only valid when roll and pitch angles are near zero.
+    #If you're slamming on the brakes or turning hard they can depart significantly from zero, and your transformed
+    #image will no longer be a valid map. Think about setting thresholds near zero in roll and pitch to determine which
+    #transformed images are valid for mapping.
+    is_roll_small = (Rover.roll < 1.00) or (Rover.roll > 359.00) 
+    is_pitch_small = (Rover.pitch < 1.00) or (Rover.pitch > 359.00) 
+    if is_roll_small and is_pitch_small:
+        # 5) Convert map image pixel values to rover-centric coords
+        obs_x, obs_y = rover_coords(obstacle)
+        rock_x, rock_y = rover_coords(sample_rock)
+        # 6) Convert rover-centric pixel values to world coordinates
+        rover_xpos = Rover.pos[0]
+        rover_ypos = Rover.pos[1]
+        rover_yaw = Rover.yaw
+        nav_x_world, nav_y_world = pix_to_world(nav_x, nav_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
+        obs_x_world, obs_y_world = pix_to_world(obs_x, obs_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
+        rock_x_world, rock_y_world = pix_to_world(rock_x, rock_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
+        # 7) Update Rover worldmap (to be displayed on right side of screen)
+        Rover.worldmap[obs_y_world, obs_x_world, 0] += 1
+        Rover.worldmap[rock_y_world, rock_x_world, 1] += 96
+        Rover.worldmap[nav_y_world, nav_x_world, 2] += 1
 
     # 8) Convert rover-centric pixel positions to polar coordinates
     # Update Rover pixel distances and angles
