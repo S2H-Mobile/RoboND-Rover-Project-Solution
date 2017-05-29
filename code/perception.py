@@ -33,7 +33,7 @@ def obstacle_selection(img, rgb_upper=(160, 160, 160)):
     color_select = np.zeros_like(img[:,:,0])
     
     # we define "black" as "any of the color channels is above the threshold" 
-    thr_black = 2
+    thr_black = 0
     is_not_black = (img[:,:,0] > thr_black) | (img[:,:,1] > thr_black) | (img[:,:,2] > thr_black)
     
     # for dark walls, this is not the inverse of the navigable terrain, so there is a gap in the rover vision image
@@ -122,6 +122,10 @@ def perception_step(Rover):
     
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     navigable = color_thresh(warped)
+    # Hints and Suggestion:
+    # For obstacles you can just invert your color selection that you used to detect ground pixels
+    # If you've decided that everything above the threshold is navigable terrain,
+    # then everthing below the threshold must be an obstacle!
     obstacle = obstacle_selection(warped)
     sample_rock = sample_rock_selection_hsv(warped)   
     
