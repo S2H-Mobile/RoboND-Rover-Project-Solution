@@ -1,5 +1,73 @@
 import numpy as np
 import cv2
+# Helper functions from the lane detection project, SDCND.
+import math
+    
+def canny(img, low_threshold, high_threshold):
+    """Applies the Canny transform"""
+    return cv2.Canny(img, low_threshold, high_threshold)
+
+def gaussian_blur(img, kernel_size):
+    """Applies a Gaussian Noise kernel"""
+    return cv2.GaussianBlur(img, (kernel_size, kernel_size), 0)
+
+def region_of_interest(img, vertices):
+    """
+    Applies an image mask.
+    
+    Only keeps the region of the image defined by the polygon
+    formed from `vertices`. The rest of the image is set to black.
+    """
+    #defining a blank mask to start with
+    mask = np.zeros_like(img)   
+    
+    #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
+    if len(img.shape) > 2:
+        channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
+        ignore_mask_color = (255,) * channel_count
+    else:
+        ignore_mask_color = 255
+        
+    #filling pixels inside the polygon defined by "vertices" with the fill color    
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+    
+    #returning the image only where mask pixels are nonzero
+    masked_image = cv2.bitwise_and(img, mask)
+    return masked_image
+
+def draw_lines(img, lines, color=[255, 255, 255], thickness=2):
+    """
+    NOTE: this is the function you might want to use as a starting point once you want to 
+    average/extrapolate the line segments you detect to map out the full
+    extent of the lane (going from the result shown in raw-lines-example.mp4
+    to that shown in P1_example.mp4).  
+    
+    Think about things like separating line segments by their 
+    slope ((y2-y1)/(x2-x1)) to decide which segments are part of the left
+    line vs. the right line.  Then, you can average the position of each of 
+    the lines and extrapolate to the top and bottom of the lane.
+    
+    This function draws `lines` with `color` and `thickness`.    
+    Lines are drawn on the image inplace (mutates the image).
+    If you want to make the lines semi-transparent, think about combining
+    this function with the weighted_img() function below
+    """
+    if lines is not None:
+        for line in lines:
+            for x1,y1,x2,y2 in line:
+                cv2.line(img, (x1, y1), (x2, y2), color, thickness)
+
+def hough_line_image(img, lines):
+    """
+    `img` should be the output of a Canny transform. Lines are the hough lines in that image.
+        
+    Returns an image with hough lines drawn.
+    """
+    line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+    draw_lines(line_img, lines)
+    return line_img
+
+######################################################################################
 
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
@@ -134,10 +202,30 @@ def perception_step(Rover):
     sample_rock = sample_rock_selection_hsv(warped)   
     
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
-    Rover.vision_image[:,:,0] = obstacle*255
-    Rover.vision_image[:,:,1] = sample_rock
-    Rover.vision_image[:,:,2] = navigable*255
+    vision_im = np.zeros((160, 320, 3), dtype=np.uint8)
+    vision_im[:,:,0] = obstacle*255
+    vision_im[:,:,1] = sample_rock
+    vision_im[:,:,2] = navigable*255
+    
+    # 5 by 5 Gaussian Blur
+    blurred = gaussian_blur(navigable, 5)
+    # edge detection
+    edges = canny(blurred, 0, 1)
+        # apply region of interest mask
+    region = np.array([[[152, 150], [158,150], [320,0], [0,0]]], dtype=np.int32)
+    edges_masked = region_of_interest(edges, region)
+    # Hough lines
+    threshold = 40
+    min_line_len = 30
+    max_line_gap = 8
+    rho = 1
+    theta = np.pi/180
+    Rover.hough_lines = cv2.HoughLinesP(edges_masked, rho, theta, threshold, np.array([]), min_line_len, max_line_gap)
+    hough_img = hough_line_image(edges_masked, Rover.hough_lines)
 
+    # blend hough lines over vision image
+    Rover.vision_image = cv2.addWeighted(vision_im,0.7,hough_img,0.3,0)
+    
     # 5) Convert map image pixel values to rover-centric coords
     nav_x, nav_y = rover_coords(navigable)
     rock_x, rock_y = rover_coords(sample_rock)

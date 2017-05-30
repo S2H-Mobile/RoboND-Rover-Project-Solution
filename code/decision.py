@@ -78,7 +78,16 @@ def decision_step(Rover):
                     # Set steering to average angle clipped to the range +/- 15   
                     # here we can apply pid
                     nav_angle = np.mean(to_deg(Rover.nav_angles))
-                    steering_angle = np.clip(nav_angle, -15, 15)
+                    if Rover.hough_lines is not None:
+                        theta = 0
+                        for x1,y1,x2,y2 in Rover.hough_lines[0]:
+                            theta = to_deg(np.arctan2(y2-y1, x2-x1))
+                            print("nav_angle {}, theta {}".format(nav_angle,theta))
+                        raw_angle = 0.5 * (nav_angle + theta)
+                        print("raw angle {}".format(raw_angle))
+                    else:
+                        raw_angle = nav_angle
+                    steering_angle = np.clip(raw_angle, -15, 15)
                     print("Set steering angle to {}.".format(steering_angle))
                     Rover.steer = steering_angle
             # If there's a lack of navigable terrain pixels then go to 'stop' mode

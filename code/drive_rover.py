@@ -51,6 +51,7 @@ class RoverState():
         self.brake = 0 # Current brake value
         self.nav_angles = None # Angles of navigable terrain pixels
         self.nav_dists = None # Distances of navigable terrain pixels
+        self.hough_lines = None # edge detection lines for steering
         self.sample_angles = None # Angles of sample pixels
         self.sample_dists = None # Distances of sample pixels
         self.ground_truth = ground_truth_3d # Ground truth worldmap
@@ -67,7 +68,7 @@ class RoverState():
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
-        self.vision_image = np.zeros((160, 320, 3), dtype=np.float) 
+        self.vision_image = np.zeros((160, 320, 3), dtype=np.uint8) 
         # Worldmap
         # Update this image with the positions of navigable terrain
         # obstacles and rock samples
