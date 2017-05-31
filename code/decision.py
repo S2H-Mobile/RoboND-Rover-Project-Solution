@@ -18,6 +18,8 @@ def clear_path_ahead(r, min_free_forward=20, min_aperture=1.0):
     # indices of forward angles
     thr = np.pi/8
     indices = np.where((r.nav_angles > -thr) & (r.nav_angles < thr))
+    
+    # evaluate the distances
     if len(indices) > 0:
         forward_pixel_distances = r.nav_dists[indices]
         is_forward_free = np.mean(forward_pixel_distances) > min_free_forward
@@ -91,7 +93,7 @@ def decision_step(Rover):
                     Rover.steer = steer_angle_approach_sample
                 else:
                     # Exploring
-                    # mode is forward, terrain appears anvigable
+                    # mode is forward, terrain appears navigable
                     
                     # set throttle
                     # if velocity is below max, then throttle, else coast 
