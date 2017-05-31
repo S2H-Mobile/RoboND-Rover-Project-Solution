@@ -19,9 +19,8 @@
 
 [//]: # (Image References)
 
-[image1]: ./misc/rover_image.jpg
-[image2]: ./calibration_images/example_grid1.jpg
-[image3]: ./calibration_images/example_rock1.jpg 
+[image1]: ./successful_run_wall_crawler_1280_600_simple_fps_5.png
+
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/916/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -96,6 +95,8 @@ The decision tree is structured as follows. On the top level, the Rover state is
 I used the following simulator settings resolution **1280 x 600**, quality **simple**. The FPS rate often started at 10 and slowed down to 6.
 
 The rover was able to navigate the terrain, typically with a fidelity of about 70%. Covering enough map area took quite long, path planning will probably improve the performance in this metric. The rover was able to keep a wall to its right, as intended in the current implementation. It was also in some cases able to pick up some of the rocks. 
+
+![Example run.][image1]
 
 The following unwanted behaviour occured and how it might be solved:
 
