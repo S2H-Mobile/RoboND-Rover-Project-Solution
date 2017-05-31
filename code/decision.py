@@ -149,7 +149,8 @@ def decision_step(Rover):
                     # Now we're stopped and we have vision data to see if there's a path forward
                     # If we're stopped but see sufficient navigable terrain in front then go!
                     #if len(Rover.nav_angles) >= Rover.go_forward:
-                    if clear_path_ahead(Rover, 16, 0.5):
+                    #if abs(np.mean(Rover.nav_angles * 180/np.pi)) < 30: # nav terrrain at most 30 degrees away from heading
+                    if clear_path_ahead(Rover, 25, 0.6) and (abs(np.mean(Rover.nav_angles * 180/np.pi)) < 25):
                         # Set throttle back to stored value
                         Rover.throttle = Rover.throttle_set
                         # Release the brake

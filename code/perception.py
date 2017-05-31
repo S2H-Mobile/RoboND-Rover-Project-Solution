@@ -1,6 +1,10 @@
 import numpy as np
 import cv2
-# Helper functions from the lane detection project, SDCND.
+
+##############################################################################################
+# Attribution:
+# Helper functions from the lane detection project, Self-Driving Car Nanodegree, Udacity.
+# Slightly modified.
 import math
     
 def canny(img, low_threshold, high_threshold):
@@ -100,9 +104,8 @@ def obstacle_selection(img, rgb_upper=(160, 160, 160)):
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     
-    # we define "black" as "any of the color channels is above the threshold" 
-    thr_black = 0
-    is_not_black = (img[:,:,0] > thr_black) | (img[:,:,1] > thr_black) | (img[:,:,2] > thr_black)
+    # we define "black" as "any of the color channels is above zero" 
+    is_not_black = (img[:,:,0] > 0) | (img[:,:,1] > 0) | (img[:,:,2] > 0)
     
     # for dark walls, this is not the inverse of the navigable terrain, so there is a gap in the rover vision image
     is_dark = (img[:,:,0] < rgb_upper[0]) & (img[:,:,1] < rgb_upper[1]) & (img[:,:,2] < rgb_upper[2])
@@ -194,10 +197,6 @@ def perception_step(Rover):
     
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     navigable = color_thresh(warped)
-    # Hints and Suggestion:
-    # For obstacles you can just invert your color selection that you used to detect ground pixels
-    # If you've decided that everything above the threshold is navigable terrain,
-    # then everthing below the threshold must be an obstacle!
     obstacle = obstacle_selection(warped)
     sample_rock = sample_rock_selection_hsv(warped)   
     
