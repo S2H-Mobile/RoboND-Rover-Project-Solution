@@ -33,6 +33,7 @@ def decision_step(Rover):
             # Check the extent of navigable terrain
             if clear_path_ahead(Rover):
                 if sample_in_sight(Rover):
+                    # Approaching rock sample
                     # actual distance is closer than the mean
                     estimated_sample_dist = np.mean(Rover.sample_dists) - np.std(Rover.sample_dists)
                     estimated_sample_angle = np.mean(to_deg(Rover.sample_angles))
@@ -40,7 +41,7 @@ def decision_step(Rover):
                     # decide throttle and brake
                     # speed proportional to distance
                     if estimated_sample_dist < 20.0:
-                        print("Rock sample in distance {} which is less than 20.0, approaching.".format(estimated_sample_dist))
+                        print("Detected rock sample in distance {} < 20.0, approaching sample.".format(estimated_sample_dist))
                         if Rover.near_sample:
                             print("Rock sample near, stopping.")
                             Rover.throttle = 0
@@ -61,35 +62,36 @@ def decision_step(Rover):
                             print("Brake.")
                             Rover.throttle = 0
                             Rover.brake = Rover.brake_set
-                    # steering
-                    steering_angle = np.clip(estimated_sample_angle, -15, 15)
-                    print("Set steering angle to {}.".format(steering_angle))
-                    Rover.steer = steering_angle
+                            
+                    # set steering
+                    steer_angle_approach_sample = np.clip(estimated_sample_angle, -20, 20)
+                    print("Set steering angle to {}.".format(steer_angle_approach_sample))
+                    Rover.steer = steer_angle_approach_sample
                 else:
-                    #mode is forward, navigable terrain looks good 
-                    # and velocity is below max, then throttle 
+                    # Exploring
+                    # mode is forward, terrain appears anvigable
+                    
+                    # set throttle
+                    # if velocity is below max, then throttle, else coast 
                     if Rover.vel < Rover.max_vel:
-                        # Set throttle value to throttle setting
                         Rover.throttle = Rover.throttle_set
-                    else: # Else coast
-                        Rover.throttle = 0
-                    # dont brake
-                    Rover.brake = 0
-                    # Set steering to average angle clipped to the range +/- 15   
-                    # here we can apply pid
-                    nav_angle = np.mean(to_deg(Rover.nav_angles))
-                    if Rover.hough_lines is not None:
-                        theta = 0
-                        for x1,y1,x2,y2 in Rover.hough_lines[0]:
-                            theta = to_deg(np.arctan2(y2-y1, x2-x1))
-                            print("nav_angle {}, theta {}".format(nav_angle,theta))
-                        raw_angle = 0.5 * (nav_angle + theta)
-                        print("raw angle {}".format(raw_angle))
                     else:
-                        raw_angle = nav_angle
-                    steering_angle = np.clip(raw_angle, -15, 15)
-                    print("Set steering angle to {}.".format(steering_angle))
-                    Rover.steer = steering_angle
+                        Rover.throttle = 0
+                        
+                    # set brake: dont brake
+                    Rover.brake = 0
+                    
+                    # Set steering to weighted average of mean angle and right edge of navigable area   
+                    # trying to always keep a wall on its right
+                    # alternative approach would be to use Hough lines here instead min_angle
+                    mean_angle = np.mean(to_deg(Rover.nav_angles))
+                    min_angle = np.min(to_deg(Rover.nav_angles)) 
+                    weighted_angle = 0.2 * (4 * mean_angle + min_angle)
+                    print("Weighted angle {}.".format(weighted_angle))
+                    steer_angle_exploring = np.clip(weighted_angle, -15, 15)
+                    print("Set steering angle to {}.".format(steer_angle_exploring))
+                    Rover.steer = steer_angle_exploring
+                    
             # If there's a lack of navigable terrain pixels then go to 'stop' mode
             #elif len(Rover.nav_angles) < Rover.stop_forward:
             else:

@@ -207,24 +207,27 @@ def perception_step(Rover):
     vision_im[:,:,1] = sample_rock
     vision_im[:,:,2] = navigable*255
     
+    # OPTIONAL Hough line detection
     # 5 by 5 Gaussian Blur
-    blurred = gaussian_blur(navigable, 5)
+    #blurred = gaussian_blur(navigable, 5)
     # edge detection
-    edges = canny(blurred, 0, 1)
-        # apply region of interest mask
-    region = np.array([[[152, 150], [158,150], [320,0], [0,0]]], dtype=np.int32)
-    edges_masked = region_of_interest(edges, region)
+    #edges = canny(blurred, 0, 1)
+    # apply region of interest mask
+    #region = np.array([[[152, 150], [158,150], [320,0], [0,0]]], dtype=np.int32)
+    #edges_masked = region_of_interest(edges, region)
     # Hough lines
-    threshold = 40
-    min_line_len = 30
-    max_line_gap = 8
-    rho = 1
-    theta = np.pi/180
-    Rover.hough_lines = cv2.HoughLinesP(edges_masked, rho, theta, threshold, np.array([]), min_line_len, max_line_gap)
-    hough_img = hough_line_image(edges_masked, Rover.hough_lines)
-
+    #threshold = 40
+    #min_line_len = 30
+    #max_line_gap = 8
+    #rho = 1
+    #theta = np.pi/180
+    #Rover.hough_lines = cv2.HoughLinesP(edges_masked, rho, theta, threshold, np.array([]), min_line_len, max_line_gap)
+    #hough_img = hough_line_image(edges_masked, Rover.hough_lines)
     # blend hough lines over vision image
-    Rover.vision_image = cv2.addWeighted(vision_im,0.7,hough_img,0.3,0)
+    #Rover.vision_image = cv2.addWeighted(vision_im,0.7,hough_img,0.3,0)
+    
+    # here we use the vision image only
+    Rover.vision_image = vision_im
     
     # 5) Convert map image pixel values to rover-centric coords
     nav_x, nav_y = rover_coords(navigable)
