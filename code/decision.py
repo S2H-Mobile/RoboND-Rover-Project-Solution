@@ -2,18 +2,40 @@
 # Here you're all set up with some basic functionality but you'll need to
 # improve on this decision tree to do a good job of navigating autonomously!
 #
-# Optimizing Time Tip: Moving faster and more efficiently will minimize total time.
-# Think about allowing for a higher maximum velocity and give your rover the brains to not revisit previously mapped areas.
-#
-# Optimizing for Finding All Rocks Tip:
+# Implemented: Optimizing for Finding All Rocks Tip
 # The sample rocks always appear near the walls.
 # Think about making your rover a "wall crawler" that explores the environment
 # by always keeping a wall on its left or right. If done right, this optimization can help all the aforementioned metrics.
+#
+# Todo: Optimizing Time Tip:
+# Moving faster and more efficiently will minimize total time.
+# Think about allowing for a higher maximum velocity and give your rover the brains to not revisit previously mapped areas.
 import numpy as np
 
 # criterion for deciding whether navigable terrain is ahead
-# more than 50 navigable pixels in the image
-clear_path_ahead = lambda r: len(r.nav_angles) >= r.stop_forward
+def clear_path_ahead(r, min_free_forward=20, min_aperture=1.0):
+    # check free distance ahead
+    # indices of forward angles
+    thr = np.pi/8
+    indices = np.where((r.nav_angles > -thr) & (r.nav_angles < thr))
+    if len(indices) > 0:
+        forward_pixel_distances = r.nav_dists[indices]
+        is_forward_free = np.mean(forward_pixel_distances) > min_free_forward
+    else:
+        is_forward_free = False
+    print("Is forward direction free? {}".format(is_forward_free))
+    
+    #check aperture of navigable terrain
+    if r.nav_angles is not None and len(r.nav_angles) > 0:
+        aperture = abs(np.max(r.nav_angles) - np.min(r.nav_angles))
+        print("Aperture {}".format(aperture))
+        is_aperture_wide_enough = aperture > min_aperture
+    else:
+        is_aperture_wide_enough = False
+    print("Is aperture wide enough? {}".format(is_aperture_wide_enough))
+    
+    # consider path clear if both conditions are met
+    return is_forward_free and is_aperture_wide_enough
 
 # criterion for deciding whether rock sample is in sight
 # more than 4 rock sample pixels in the image 
@@ -31,7 +53,7 @@ def decision_step(Rover):
         if Rover.mode == 'forward':
             print("Rover in forward mode.")
             # Check the extent of navigable terrain
-            if clear_path_ahead(Rover):
+            if clear_path_ahead(Rover, 20, 1.2):
                 if sample_in_sight(Rover):
                     # Approaching rock sample
                     # actual distance is closer than the mean
@@ -125,14 +147,9 @@ def decision_step(Rover):
                 else:
                     print("Getting unstuck.")
                     # Now we're stopped and we have vision data to see if there's a path forward
-                    if len(Rover.nav_angles) < Rover.go_forward:
-                        Rover.throttle = 0
-                        # Release the brake to allow turning
-                        Rover.brake = 0
-                        # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
-                        Rover.steer = -15 # Could be more clever here about which way to turn
                     # If we're stopped but see sufficient navigable terrain in front then go!
-                    if len(Rover.nav_angles) >= Rover.go_forward:
+                    #if len(Rover.nav_angles) >= Rover.go_forward:
+                    if clear_path_ahead(Rover, 16, 0.5):
                         # Set throttle back to stored value
                         Rover.throttle = Rover.throttle_set
                         # Release the brake
@@ -140,6 +157,19 @@ def decision_step(Rover):
                         # Set steer to mean angle
                         Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
                         Rover.mode = 'forward'
+                        print("Terrain seems free, accelerating.")
+                    else:
+                        Rover.throttle = 0
+                        # Release the brake to allow turning
+                        Rover.brake = 0
+                        # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
+                        # turn to the left, since we keep rocks on the right during exploration
+                        if np.mean(Rover.nav_angles) > 0:
+                            steer = 15
+                        else:
+                            steer = -15
+                        Rover.steer = steer
+                        print("Terrain still blocked, steer {}.".format(steer))
     # Just to make the rover do something 
     # even if no modifications have been made to the code
     else:
