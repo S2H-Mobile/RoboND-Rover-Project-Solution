@@ -56,6 +56,7 @@ class RoverState():
         self.sample_dists = None # Distances of sample pixels
         self.ground_truth = ground_truth_3d # Ground truth worldmap
         self.mode = 'forward' # Current mode (can be forward or stop)
+        self.message = None # short status message to print out on the map screen
         self.throttle_set = 0.2 # Throttle setting when accelerating
         self.brake_set = 10 # Brake setting when braking
         # The stop_forward and go_forward fields below represent total count

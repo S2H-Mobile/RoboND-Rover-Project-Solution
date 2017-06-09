@@ -19,8 +19,7 @@ def update_rover(Rover, data):
             tot_time = time.time() - Rover.start_time
             if np.isfinite(tot_time):
                   Rover.total_time = tot_time
-      # Print out the fields in the telemetry data dictionary
-      #print(data.keys())
+                    
       # The current speed of the rover in m/s
       Rover.vel = np.float(data["speed"])
       # The current position of the rover
@@ -39,10 +38,6 @@ def update_rover(Rover, data):
       Rover.near_sample = np.int(data["near_sample"])
       # Picking up flag
       Rover.picking_up = np.int(data["picking_up"])
-      
-      print('speed =',Rover.vel, 'position =', Rover.pos, 'throttle =', 
-      Rover.throttle, 'steer_angle =', Rover.steer, 'near_sample', Rover.near_sample, 
-      'picking_up', data["picking_up"])
 
       # Get the current image from the center camera of the rover
       imgString = data["image"]
@@ -125,7 +120,13 @@ def create_output_images(Rover):
                   cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
       cv2.putText(map_add,"Mode: " + Rover.mode, (0, 170), 
                   cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
-
+      if Rover.message is None:  
+            msg = "None"
+      else:
+            msg = Rover.message
+      cv2.putText(map_add,"Msg: " + msg, (0, 185), 
+                  cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
+    
       # Convert map and vision image to base64 strings for sending to server
       pil_img = Image.fromarray(map_add.astype(np.uint8))
       buff = BytesIO()
