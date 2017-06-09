@@ -19,8 +19,10 @@ import time
 
 # Import functions for perception and decision making
 from perception import perception_step
-from decision import decision_step
 from supporting_functions import update_rover, create_output_images
+from state_queue import StateQueue
+from states import Explore
+
 # Initialize socketio server and Flask application 
 # (learn more at: https://python-socketio.readthedocs.io/en/latest/)
 sio = socketio.Server()
@@ -55,7 +57,7 @@ class RoverState():
         self.sample_angles = None # Angles of sample pixels
         self.sample_dists = None # Distances of sample pixels
         self.ground_truth = ground_truth_3d # Ground truth worldmap
-        self.mode = 'forward' # Current mode (can be forward or stop)
+        self.mode = "No tasks scheduled." # Current mode.
         self.message = None # short status message to print out on the map screen
         self.throttle_set = 0.2 # Throttle setting when accelerating
         self.brake_set = 10 # Brake setting when braking
@@ -89,6 +91,8 @@ frame_counter = 0
 second_counter = time.time()
 fps = None
 
+# Initialize state queue.
+sq = StateQueue(Explore())
 
 # Define telemetry function for what to do with incoming data
 @sio.on('telemetry')
@@ -104,15 +108,24 @@ def telemetry(sid, data):
     print("Current FPS: {}".format(fps))
 
     if data:
-        global Rover
+        global Rover, sq
         # Initialize / update Rover with current telemetry
         Rover, image = update_rover(Rover, data)
 
         if np.isfinite(Rover.vel):
 
-            # Execute the perception and decision steps to update the Rover's state
+            # Execute the perception step to update the Rover's data
             Rover = perception_step(Rover)
-            Rover = decision_step(Rover)
+            
+            # Update the Rover's state and perform action
+            state = sq.get_next(Rover)
+            if state is not None:
+                Rover = state.run_current(Rover)
+                Rover.mode = state.get_current().__class__.__name__
+                Rover.message = "{}".format(len(sq.queue))
+            else:
+                Rover.mode = "All tasks finished."
+                Rover.message = "All tasks finished."
 
             # Create output images to send to server
             out_image_string1, out_image_string2 = create_output_images(Rover)
