@@ -232,6 +232,10 @@ def calibrate(image):
                   ])
     return src, dst
 
+def impose_range(x, y, range=50):
+    d = np.sqrt(x**2 + y**2)
+    return x[d<range], y[d<range]
+
 # Apply the above functions in succession and update the Rover state accordingly
 def perception_step(Rover): 
     image = Rover.img
@@ -301,13 +305,15 @@ def perception_step(Rover):
         rover_xpos = Rover.pos[0]
         rover_ypos = Rover.pos[1]
         rover_yaw = Rover.yaw
-        nav_x_world, nav_y_world = pix_to_world(nav_x, nav_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
-        obs_x_world, obs_y_world = pix_to_world(obs_x, obs_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
+        nav_x_range, nav_y_range = impose_range(nav_x, nav_y)
+        obs_x_range, obs_y_range = impose_range(obs_x, obs_y)
+        nav_x_world, nav_y_world = pix_to_world(nav_x_range, nav_y_range, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
+        obs_x_world, obs_y_world = pix_to_world(obs_x_range, obs_y_range, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
         rock_x_world, rock_y_world = pix_to_world(rock_x, rock_y, rover_xpos, rover_ypos, rover_yaw, Rover.worldmap.shape[0], 10)
         # 7) Update Rover worldmap (to be displayed on right side of screen)
         Rover.worldmap[obs_y_world, obs_x_world, 0] += 1
-        Rover.worldmap[rock_y_world, rock_x_world] = [255,255,0]
-        Rover.worldmap[nav_y_world, nav_x_world, 2] += 2
+        Rover.worldmap[rock_y_world, rock_x_world] += 1
+        Rover.worldmap[nav_y_world, nav_x_world, 2] += 1
 
     # 8) Convert rover-centric pixel positions to polar coordinates
     # Update Rover navigable pixel and rock sample distances and angles
