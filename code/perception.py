@@ -1,23 +1,27 @@
+# -*- coding: utf-8 -*-
+"""Perception module.
+
+This module defines a pipeline for interpreting images from Mars Rover front camera.
+
+Attribution:
+    Helper functions taken from the lane detection project, Self-Driving Car
+    Nanodegree at Udacity.
+"""
 import numpy as np
 import cv2
-
-##############################################################################################
-# Attribution:
-# Helper functions from the lane detection project, Self-Driving Car Nanodegree, Udacity.
-# Slightly modified.
 import math
     
 def canny(img, low_threshold, high_threshold):
-    """Applies the Canny transform"""
+    """Source:SDCND, Udacity. Applies the Canny transform"""
     return cv2.Canny(img, low_threshold, high_threshold)
 
 def gaussian_blur(img, kernel_size):
-    """Applies a Gaussian Noise kernel"""
+    """Source:SDCND, Udacity. Applies a Gaussian Noise kernel"""
     return cv2.GaussianBlur(img, (kernel_size, kernel_size), 0)
 
 def region_of_interest(img, vertices):
     """
-    Applies an image mask.
+    Source:SDCND, Udacity. Applies an image mask.
     
     Only keeps the region of the image defined by the polygon
     formed from `vertices`. The rest of the image is set to black.
@@ -41,6 +45,8 @@ def region_of_interest(img, vertices):
 
 def draw_lines(img, lines, color=[255, 255, 255], thickness=2):
     """
+    Source:SDCND, Udacity. 
+    
     NOTE: this is the function you might want to use as a starting point once you want to 
     average/extrapolate the line segments you detect to map out the full
     extent of the lane (going from the result shown in raw-lines-example.mp4
@@ -63,6 +69,8 @@ def draw_lines(img, lines, color=[255, 255, 255], thickness=2):
 
 def hough_line_image(img, lines):
     """
+    Source:SDCND, Udacity.
+    
     `img` should be the output of a Canny transform. Lines are the hough lines in that image.
         
     Returns an image with hough lines drawn.
@@ -71,11 +79,19 @@ def hough_line_image(img, lines):
     draw_lines(line_img, lines)
     return line_img
 
-######################################################################################
 
-# Identify pixels above the threshold
-# Threshold of RGB > 160 does a nice job of identifying ground pixels only
 def color_thresh(img, rgb_thresh=(160, 160, 160)):
+    """Identifies navigable terrain in the Rover vision image by applying a minimum color treshold to the pixels.
+    
+    Args:
+        img (np.array): The Rover vision image to select pixels from.
+        
+        int, int, int: RGB values for the lower threshold. Value 160 does a nice job of identifying ground pixels only.
+
+    Returns:
+        np.array(bool): The boolean array containing the selected pixels.
+    """
+
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     # Require that each pixel be above all three threshold values in RGB
@@ -90,28 +106,50 @@ def color_thresh(img, rgb_thresh=(160, 160, 160)):
     return color_select
 
 def sample_rock_selection_hsv(img):
-    # Convert RGB to HSV
+    """Converts an RGB image to HSV and selects yellow pixels by applying a lower and upper bound.
+
+    Args:
+        img (np.array): The Rover vision image to select pixels from.
+
+    Returns:
+        np.array(bool): The boolean array containing the selected pixels.
+    """
+    # Convert from RGB to HSV color space
     hsv_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 
-    # define range of yellow color in HSV
+    # Define range for yellow color in HSV
     lower_yellow = np.array([20,100,100])
     upper_yellow = np.array([40,255,255])
 
-    # Threshold the HSV image to get only yellow colors and return the mask
+    # Return array of all pixels inside the range between lower and upper bound
     return cv2.inRange(hsv_image, lower_yellow, upper_yellow)
 
 def obstacle_selection(img, rgb_upper=(160, 160, 160)):
+    """Identifies obstacles in the Rover vision image by exxcluding black pixels and applying a maximum color treshold to the pixels.
+    
+    Args:
+        img (np.array): The Rover vision image to select pixels from.
+        
+        int, int, int: RGB values for the upper threshold.
+
+    Returns:
+        np.array(bool): The boolean array containing the selected pixels.
+    """
+
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     
-    # we define "black" as "any of the color channels is above zero" 
+    # Define a pixel as not black when any of its channels is greater than zero 
     is_not_black = (img[:,:,0] > 0) | (img[:,:,1] > 0) | (img[:,:,2] > 0)
     
-    # for dark walls, this is not the inverse of the navigable terrain, so there is a gap in the rover vision image
+    # Detect dark regions in the image.
+    # This is not the inverse of the navigable terrain, so there will be a gap in the rover vision image.
     is_dark = (img[:,:,0] < rgb_upper[0]) & (img[:,:,1] < rgb_upper[1]) & (img[:,:,2] < rgb_upper[2])
             
-    # Index the array of zeros with the boolean array and set to 1
+    # Combine both properties. A wall is not black and is dark.
     is_wall = is_not_black & is_dark
+    
+    # Index the array with selected pixels
     color_select[is_wall] = 1
     return color_select
 
@@ -169,9 +207,18 @@ def perspect_transform(img, src, dst):
     return warped
 
 def calibrate(image):
-    # Define calibration box in source (actual) and destination (desired) coordinates
-    # These source and destination points are defined to warp the image
-    # to a grid where each 10x10 pixel square represents 1 square meter
+    """Define calibration box in source (actual) and destination (desired) coordinates.
+        These source and destination points are defined to warp the image to a grid where
+        each 10x10 pixel square represents 1 square meter.
+    
+    Args:
+        img (np.array): The Rover vision image.
+
+    Returns:
+        np.array(float32), np.array(float32): The (x,y) pairs defining the source and destination
+            polygons used for perspective transformation.
+    """
+    
     # The destination box will be 2*dst_size on each side
     dst_size = 5 
     # Set a bottom offset to account for the fact that the bottom of the image 
@@ -206,27 +253,35 @@ def perception_step(Rover):
     vision_im[:,:,1] = sample_rock
     vision_im[:,:,2] = navigable*255
     
-    # OPTIONAL Hough line detection
-    # 5 by 5 Gaussian Blur
-    #blurred = gaussian_blur(navigable, 5)
-    # edge detection
-    #edges = canny(blurred, 0, 1)
-    # apply region of interest mask
-    #region = np.array([[[152, 150], [158,150], [320,0], [0,0]]], dtype=np.int32)
-    #edges_masked = region_of_interest(edges, region)
-    # Hough lines
-    #threshold = 40
-    #min_line_len = 30
-    #max_line_gap = 8
-    #rho = 1
-    #theta = np.pi/180
-    #Rover.hough_lines = cv2.HoughLinesP(edges_masked, rho, theta, threshold, np.array([]), min_line_len, max_line_gap)
-    #hough_img = hough_line_image(edges_masked, Rover.hough_lines)
-    # blend hough lines over vision image
-    #Rover.vision_image = cv2.addWeighted(vision_im,0.7,hough_img,0.3,0)
+    ######################
+    # Detect Hough lines #
+    ######################
     
-    # here we use the vision image only
-    Rover.vision_image = vision_im
+    # 5 by 5 Gaussian Blur
+    blurred = gaussian_blur(navigable, 5)
+    
+    # edge detection
+    edges = canny(blurred, 0, 1)
+    
+    # apply region of interest mask
+    region = np.array([[[152, 150], [158,150], [320,0], [0,0]]], dtype=np.int32)
+    edges_masked = region_of_interest(edges, region)
+    
+    # Define detection parameters
+    threshold = 40
+    min_line_len = 30
+    max_line_gap = 12
+    rho = 10 # 10 pixel accuracy
+    theta = np.pi/ (180 * 5) # 5 degree accuracy
+    
+    # Apply the detection algorithm
+    Rover.hough_lines = cv2.HoughLinesP(edges_masked, rho, theta, threshold, np.array([]), min_line_len, max_line_gap)
+    
+    # Create an image containing the detected lines
+    hough_img = hough_line_image(edges_masked, Rover.hough_lines)
+    
+    # Blend both images
+    Rover.vision_image = cv2.addWeighted(vision_im, 0.7, hough_img, 0.9, 0)
     
     # 5) Convert map image pixel values to rover-centric coords
     nav_x, nav_y = rover_coords(navigable)
