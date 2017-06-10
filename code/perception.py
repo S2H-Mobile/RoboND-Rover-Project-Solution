@@ -272,7 +272,7 @@ def perception_step(Rover):
     min_line_len = 30
     max_line_gap = 12
     rho = 10 # 10 pixel accuracy
-    theta = np.pi/ (180 * 5) # 5 degree accuracy
+    theta = 5.0 * np.pi/180 # 5 degree accuracy
     
     # Apply the detection algorithm
     Rover.hough_lines = cv2.HoughLinesP(edges_masked, rho, theta, threshold, np.array([]), min_line_len, max_line_gap)
