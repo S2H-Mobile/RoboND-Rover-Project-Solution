@@ -1,7 +1,51 @@
+# -*- coding: utf-8 -*-
+"""Rover Modes.
+
+This module describes the operation modes of the rover. The modes defined here are the building blocks
+of the behaviour stack. They can be combined to from emergent complex behaviour. The states
+form a hierarchy where at the base level there are the mission objectives like exploring and
+harvesting, as well as the more tactical tasks of getting unstuck and returning to the base. The third
+layer consists of action states that define more fine grained actions like stop, turn, accelerate, coast.
+
+Mission Objectives:
+    - Explore
+    - Harvest
+    
+Supplemenary Modes:
+    - Get unstuck
+    - Return to Base
+
+Action States:
+    - Accelerate/Coast
+    - Stop
+    - Turn
+
+Todo:
+    * implement all the states given above
+    * HARVESTING OF SAMPLE ROCKS
+    * extract the decision policies in a separate module
+
+.. _Subsumption architecture on Wikipedia:
+   https://en.wikipedia.org/wiki/Subsumption_architecture
+
+"""
+
 class RoverMode(object):
+    """
+    Superclass for all the Rover states, uses the state machine programming pattern.
+    """
+    
     def run(self, rover):
+        """
+        Set the rover state like steering angle, acceleration, brakes.
+        """
         assert 0, "run not implemented"
+        
     def next(self, rover):
+        """
+        Decide here for the next state, by applying
+        a decision rule or policy to the given rover data. 
+        """
         assert 0, "next not implemented"
         
 def clear_path_ahead(r, min_free_forward=20, min_aperture=1.0):
