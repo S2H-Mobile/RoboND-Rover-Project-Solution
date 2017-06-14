@@ -159,8 +159,8 @@ def rover_coords(binary_img):
     ypos, xpos = binary_img.nonzero()
     # Calculate pixel positions with reference to the rover position being at the 
     # center bottom of the image.  
-    x_pixel = np.absolute(ypos - binary_img.shape[0]).astype(np.float)
-    y_pixel = -(xpos - binary_img.shape[0]).astype(np.float)
+    x_pixel = -(ypos - binary_img.shape[0]).astype(np.float)
+    y_pixel = -(xpos - binary_img.shape[1]/2 ).astype(np.float)
     return x_pixel, y_pixel
 
 # Define a function to convert to radial coords in rover space
@@ -173,18 +173,21 @@ def to_polar_coords(x_pixel, y_pixel):
     angles = np.arctan2(y_pixel, x_pixel)
     return dist, angles
 
-# Define a function to apply a rotation to pixel positions
+# Define a function to map rover space pixels to world space
 def rotate_pix(xpix, ypix, yaw):
-    # yaw angle is recorded in degrees so first convert to radians
+    # Convert yaw to radians
     yaw_rad = yaw * np.pi / 180
-    xpix_rotated = xpix * np.cos(yaw_rad) - ypix * np.sin(yaw_rad)
-    ypix_rotated = xpix * np.sin(yaw_rad) + ypix * np.cos(yaw_rad)
+    xpix_rotated = (xpix * np.cos(yaw_rad)) - (ypix * np.sin(yaw_rad))
+                            
+    ypix_rotated = (xpix * np.sin(yaw_rad)) + (ypix * np.cos(yaw_rad))
+    # Return the result  
     return xpix_rotated, ypix_rotated
 
-# Define a function to perform a translation
 def translate_pix(xpix_rot, ypix_rot, xpos, ypos, scale): 
-    xpix_translated = np.int_(xpos + (xpix_rot / scale))
-    ypix_translated = np.int_(ypos + (ypix_rot / scale)) 
+    # Apply a scaling and a translation
+    xpix_translated = (xpix_rot / scale) + xpos
+    ypix_translated = (ypix_rot / scale) + ypos
+    # Return the result  
     return xpix_translated, ypix_translated
 
 # Define a function to apply rotation and translation (and clipping)
@@ -201,9 +204,11 @@ def pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale):
     return x_pix_world, y_pix_world
 
 # Define a function to perform a perspective transform
-def perspect_transform(img, src, dst):           
+def perspect_transform(img, src, dst):
+           
     M = cv2.getPerspectiveTransform(src, dst)
-    warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image 
+    warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image
+    
     return warped
 
 def calibrate(image):
