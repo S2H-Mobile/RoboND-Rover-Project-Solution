@@ -21,7 +21,7 @@ import time
 from perception import perception_step
 from supporting_functions import update_rover, create_output_images
 from state_queue import StateQueue
-from states import Explore
+from modes import Explore
 
 # Initialize socketio server and Flask application 
 # (learn more at: https://python-socketio.readthedocs.io/en/latest/)
