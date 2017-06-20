@@ -1,7 +1,7 @@
 [//]: # (Image References)
 [image_0]: ./misc/rover_image.jpg
 
-This repo contains the code that can be reviewed. The writeup is in the file `writeup.md`.
+This repo contains the code for review and a [writeup](writeup.md).
 
 # Search and Sample Return Project
 ![alt text][image_0] 
