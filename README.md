@@ -1,3 +1,10 @@
+# RoboND-Rover-Project-Solution
+This is my solution of the [Search and Sample Return Project](https://github.com/udacity/RoboND-Rover-Project) as part of the Robotics Nanodegree by Udacity.
+
+The [writeup](writeup.md) describes my implementation of the solution.
+
+For setup and usage instructions follow the original README reproduced here:
+
 [//]: # (Image References)
 [image_0]: ./misc/rover_image.jpg
 [![Udacity - Robotics NanoDegree Program](https://s3-us-west-1.amazonaws.com/udacity-robotics/Extra+Images/RoboND_flag.png)](https://www.udacity.com/robotics)
