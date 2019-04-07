@@ -10,7 +10,7 @@ ground_truth = mpimg.imread('../calibration_images/map_bw.png')
 ground_truth_3d = np.dstack((ground_truth*0, ground_truth*255, ground_truth*0)).astype(np.float)
 
 # Define RoverState() class to retain rover state parameters
-class RoverState():
+class RoverState(object):
     def __init__(self):
         self.start_time = None # To record the start time of navigation
         self.total_time = None # To record total duration of naviagation
