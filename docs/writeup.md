@@ -1,23 +1,23 @@
-## Project: Search and Sample Return
+# Project: Search and Sample Return
 
 *Submitted by Stephan Höhne*
 
+## Tasks
+The following steps need to be performed in order to complete the project.  
 
-**The goals / steps of this project are the following:**  
+**Training and Calibration**
 
-**Training / Calibration**  
-
-* Download the simulator and take data in "Training Mode"
-* Test out the functions in the Jupyter Notebook provided
-* Add functions to detect obstacles and samples of interest (golden rocks)
+* Download the Rover simulator and record data in training mode.
+* Test out the functions in the Jupyter Notebook provided.
+* Add functions to detect obstacles and samples of interest (golden rocks).
 * Fill in the `process_image()` function with the appropriate image processing steps (perspective transform, color threshold etc.) to get from raw images to a map.  The `output_image` you create in this step should demonstrate that your mapping pipeline works.
 * Use `moviepy` to process the images in your saved dataset with the `process_image()` function.  Include the video you produce as part of your submission.
 
-**Autonomous Navigation / Mapping**
+**Autonomous Navigation and Mapping**
 
-* Fill in the `perception_step()` function within the `perception.py` script with the appropriate image processing functions to create a map and update `Rover()` data (similar to what you did with `process_image()` in the notebook). 
+* Fill in the `perception_step()` function within the `perception.py` script with the appropriate image processing functions to create a map and update `Rover()` data, similar to what you did with `process_image()` in the notebook. 
 * Fill in the `decision_step()` function within the `decision.py` script with conditional statements that take into consideration the outputs of the `perception_step()` in deciding how to issue throttle, brake and steering commands. 
-* Iterate on your perception and decision function until your rover does a reasonable (need to define metric) job of navigating and mapping.  
+* Iterate on your perception and decision function until your rover does a reasonable job of navigating and mapping.  
 
 [//]: # (Image References)
 
@@ -104,5 +104,3 @@ The following unwanted behaviour occured and how it might be solved:
 - Improve criteria for getting unstuck and for clear path ahead. Create more features like Hough lines that indicate blocking stones. Optimizing threshold values for distances and angles, make those values dependent on current Rover state. Ultimately the rover should make decisions based on evaluation of the entire vision image and not just some handcrafted features like angles and lines. Might be done with a convolutional network.   
 
 - Path planning. Keep a memory of mapped area. When at a crossroads, decide to go for the uncharted territory. Return to the starting point when all sample rocks are collected.
-
-
